@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watchy Simulator</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        
+        .watchy-container {
+            background: #333;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .watchy-screen {
+            width: 154px;
+            height: 154px;
+            background: #fff;
+            border: 2px solid #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #000;
+            position: relative;
+        }
+        
+        .button {
+            width: 20px;
+            height: 20px;
+            background: #666;
+            border-radius: 50%;
+            margin: 10px auto;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .button:hover {
+            background: #888;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .control-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .control-btn:hover {
+            background: #0056b3;
+        }
+        
+        .status {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="watchy-container">
+        <div class="watchy-screen" id="screen">
+            <div id="content">Hello Watchy!</div>
+        </div>
+        <div class="button" id="mainButton" onclick="handleButtonPress()"></div>
+        
+        <div class="controls">
+            <button class="control-btn" onclick="updateDisplay('Hello Watchy!')">Reset</button>
+            <button class="control-btn" onclick="updateDisplay('Time: 12:34')">Show Time</button>
+            <button class="control-btn" onclick="updateDisplay('Battery: 85%')">Show Battery</button>
+            <button class="control-btn" onclick="updateDisplay('Weather: 22°C')">Show Weather</button>
+            <button class="control-btn" onclick="simulateSleep()">Sleep Mode</button>
+        </div>
+        
+        <div class="status" id="status">Status: Active</div>
+    </div>
+
+    <script>
+        let isSleeping = false;
+        
+        function updateDisplay(text) {
+            if (isSleeping) {
+                document.getElementById('status').textContent = 'Status: Sleeping (press button to wake)';
+                return;
+            }
+            
+            document.getElementById('content').textContent = text;
+            document.getElementById('status').textContent = 'Status: Display Updated';
+        }
+        
+        function handleButtonPress() {
+            if (isSleeping) {
+                isSleeping = false;
+                document.getElementById('status').textContent = 'Status: Woken up';
+                updateDisplay('Hello Watchy!');
+            } else {
+                document.getElementById('status').textContent = 'Status: Button pressed';
+            }
+        }
+        
+        function simulateSleep() {
+            isSleeping = true;
+            document.getElementById('content').textContent = '';
+            document.getElementById('status').textContent = 'Status: Sleeping';
+        }
+        
+        // Simulation de l'API Watchy
+        window.WatchySimulator = {
+            display: {
+                fillScreen: function(color) {
+                    document.getElementById('screen').style.background = color === 'white' ? '#fff' : '#000';
+                },
+                setCursor: function(x, y) {
+                    // Simuler le positionnement du curseur
+                },
+                setTextSize: function(size) {
+                    document.getElementById('content').style.fontSize = size * 6 + 'px';
+                },
+                println: function(text) {
+                    updateDisplay(text);
+                }
+            },
+            sleep: function() {
+                simulateSleep();
+            }
+        };
+    </script>
+</body>
+</html> 
