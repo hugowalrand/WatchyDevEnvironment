@@ -20,7 +20,7 @@ Un environnement de développement complet pour créer et tester des watch-faces
 
 ### 1. Cloner le projet
 ```bash
-git clone https://github.com/votre-username/WatchyDevEnvironment.git
+git clone https://github.com/hugowalrand/WatchyDevEnvironment.git
 cd WatchyDevEnvironment
 ```
 
@@ -185,12 +185,12 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 
 ## 📞 Support
 
-- **Issues** : [GitHub Issues](https://github.com/votre-username/WatchyDevEnvironment/issues)
-- **Discussions** : [GitHub Discussions](https://github.com/votre-username/WatchyDevEnvironment/discussions)
-- **Documentation** : [Wiki](https://github.com/votre-username/WatchyDevEnvironment/wiki)
+- **Issues** : [GitHub Issues](https://github.com/hugowalrand/WatchyDevEnvironment/issues)
+- **Discussions** : [GitHub Discussions](https://github.com/hugowalrand/WatchyDevEnvironment/discussions)
+- **Documentation** : [Wiki](https://github.com/hugowalrand/WatchyDevEnvironment/wiki)
 
 ---
 
 **Version** : 1.0.0  
 **Dernière mise à jour** : 2024-01-15  
-**Compatibilité** : Watchy V2.0 
+**Compatibilité** : Watchy V2.0
