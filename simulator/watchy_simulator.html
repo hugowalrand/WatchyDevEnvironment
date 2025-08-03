@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watchy Simulator - Fidèle au Hardware</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        
+        .watchy-device {
+            background: #34495e;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        
+        .watchy-screen-container {
+            background: #2c3e50;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .watchy-screen {
+            width: 154px;
+            height: 154px;
+            background: #f8f9fa;
+            border: 2px solid #495057;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #000;
+            position: relative;
+            overflow: hidden;
+            /* Simulation de l'e-paper */
+            transition: all 0.3s ease;
+        }
+        
+        .e-paper-effect {
+            background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f8f9fa 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f8f9fa 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
+            background-size: 2px 2px;
+            background-position: 0 0, 0 1px, 1px -1px, -1px 0px;
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .watchy-button {
+            width: 25px;
+            height: 25px;
+            background: #6c757d;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #495057;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .watchy-button:hover {
+            background: #868e96;
+            transform: scale(1.1);
+        }
+        
+        .watchy-button:active {
+            background: #495057;
+            transform: scale(0.95);
+        }
+        
+        .controls {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .control-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .control-btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #adb5bd;
+            text-align: center;
+        }
+        
+        .debug-info {
+            background: #495057;
+            color: #adb5bd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .sleep-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .sleep-indicator.sleeping {
+            background: #dc3545;
+            animation: none;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .refresh-animation {
+            animation: refresh 0.5s ease-in-out;
+        }
+        
+        @keyframes refresh {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="watchy-device">
+        <div class="sleep-indicator" id="sleepIndicator"></div>
+        
+        <div class="watchy-screen-container">
+            <div class="watchy-screen e-paper-effect" id="screen">
+                <div id="content">Hello Watchy!</div>
+            </div>
+        </div>
+        
+        <div class="button-container">
+            <div class="watchy-button" id="button1" onclick="handleButtonPress(1)" title="Bouton 1 (GPIO 26)"></div>
+            <div class="watchy-button" id="button2" onclick="handleButtonPress(2)" title="Bouton 2 (GPIO 4)"></div>
+            <div class="watchy-button" id="button3" onclick="handleButtonPress(3)" title="Bouton 3 (GPIO 0)"></div>
+            <div class="watchy-button" id="button4" onclick="handleButtonPress(4)" title="Bouton 4 (GPIO 2)"></div>
+        </div>
+        
+        <div class="controls">
+            <button class="control-btn" onclick="testWatchFace('Hello Watchy!')">Test Basic</button>
+            <button class="control-btn" onclick="testWatchFace('Time: 12:34')">Test Time</button>
+            <button class="control-btn" onclick="testWatchFace('Battery: 85%')">Test Battery</button>
+            <button class="control-btn" onclick="testWatchFace('Weather: 22°C')">Test Weather</button>
+            <button class="control-btn" onclick="simulateSleep()">Sleep Mode</button>
+            <button class="control-btn" onclick="wakeUp()">Wake Up</button>
+            <button class="control-btn" onclick="clearScreen()">Clear Screen</button>
+        </div>
+        
+        <div class="status" id="status">Status: Active | Battery: 85% | Uptime: 0s</div>
+        
+        <div class="debug-info" id="debugInfo">
+            <strong>Debug Info:</strong><br>
+            Screen: 154x154 pixels<br>
+            GPIO 26: Button 1 (Main)<br>
+            GPIO 4: Button 2<br>
+            GPIO 0: Button 3<br>
+            GPIO 2: Button 4<br>
+            E-Paper: GxEPD2_154_D67<br>
+            Current State: Active
+        </div>
+    </div>
+
+    <script>
+        // Variables globales pour simuler le Watchy
+        let isSleeping = false;
+        let startTime = Date.now();
+        let batteryLevel = 85;
+        let lastRefreshTime = 0;
+        let buttonStates = [false, false, false, false];
+        
+        // Simulation des GPIO du Watchy
+        const GPIO_PINS = {
+            BUTTON_1: 26,
+            BUTTON_2: 4,
+            BUTTON_3: 0,
+            BUTTON_4: 2,
+            EPD_CS: 5,
+            EPD_DC: 10,
+            EPD_RST: 9,
+            EPD_BUSY: 19
+        };
+        
+        // Simulation de l'API Watchy fidèle
+        window.WatchySimulator = {
+            display: {
+                width: 154,
+                height: 154,
+                fillScreen: function(color) {
+                    const screen = document.getElementById('screen');
+                    if (color === 0xFFFF || color === 'white') {
+                        screen.style.background = '#f8f9fa';
+                        screen.classList.add('e-paper-effect');
+                    } else {
+                        screen.style.background = '#000';
+                        screen.classList.remove('e-paper-effect');
+                    }
+                    logDebug('Display: fillScreen(' + color + ')');
+                },
+                setCursor: function(x, y) {
+                    logDebug('Display: setCursor(' + x + ', ' + y + ')');
+                    // Simulation du positionnement (non visible dans le simulateur)
+                },
+                setTextSize: function(size) {
+                    const content = document.getElementById('content');
+                    content.style.fontSize = (size * 6) + 'px';
+                    logDebug('Display: setTextSize(' + size + ')');
+                },
+                setTextColor: function(color) {
+                    const content = document.getElementById('content');
+                    content.style.color = color === 0x0000 ? '#000' : '#fff';
+                    logDebug('Display: setTextColor(' + color + ')');
+                },
+                setFont: function(font) {
+                    logDebug('Display: setFont(' + font + ')');
+                },
+                println: function(text) {
+                    updateDisplay(text);
+                    logDebug('Display: println("' + text + '")');
+                },
+                display: function(partial) {
+                    // Simulation du refresh e-paper (plus lent que l'écran normal)
+                    const screen = document.getElementById('screen');
+                    screen.classList.add('refresh-animation');
+                    setTimeout(() => {
+                        screen.classList.remove('refresh-animation');
+                    }, 500);
+                    logDebug('Display: display(' + partial + ')');
+                },
+                setFullWindow: function() {
+                    logDebug('Display: setFullWindow()');
+                },
+                setRotation: function(rotation) {
+                    logDebug('Display: setRotation(' + rotation + ')');
+                },
+                init: function(speed) {
+                    logDebug('Display: init(' + speed + ')');
+                    updateStatus('Display initialized');
+                }
+            },
+            sleep: function() {
+                simulateSleep();
+            },
+            wakeUp: function() {
+                wakeUp();
+            },
+            // Simulation des fonctions ESP32
+            esp_sleep_enable_ext0_wakeup: function(pin, level) {
+                logDebug('ESP32: esp_sleep_enable_ext0_wakeup(' + pin + ', ' + level + ')');
+            },
+            esp_deep_sleep_start: function() {
+                logDebug('ESP32: esp_deep_sleep_start()');
+                simulateSleep();
+            },
+            delay: function(ms) {
+                logDebug('ESP32: delay(' + ms + 'ms)');
+                // Simulation du délai (non bloquant dans le simulateur)
+            }
+        };
+        
+        function updateDisplay(text) {
+            if (isSleeping) {
+                logDebug('Cannot update display: device sleeping');
+                return;
+            }
+            
+            const content = document.getElementById('content');
+            content.textContent = text;
+            updateStatus('Display updated: ' + text);
+        }
+        
+        function handleButtonPress(buttonNum) {
+            const button = document.getElementById('button' + buttonNum);
+            button.style.background = '#495057';
+            
+            setTimeout(() => {
+                button.style.background = '#6c757d';
+            }, 200);
+            
+            if (isSleeping) {
+                wakeUp();
+                logDebug('Button ' + buttonNum + ' pressed: Waking up device');
+            } else {
+                logDebug('Button ' + buttonNum + ' pressed');
+                updateStatus('Button ' + buttonNum + ' pressed');
+            }
+        }
+        
+        function simulateSleep() {
+            isSleeping = true;
+            document.getElementById('sleepIndicator').classList.add('sleeping');
+            document.getElementById('content').textContent = '';
+            updateStatus('Device sleeping');
+            logDebug('Device entering sleep mode');
+        }
+        
+        function wakeUp() {
+            isSleeping = false;
+            document.getElementById('sleepIndicator').classList.remove('sleeping');
+            updateDisplay('Hello Watchy!');
+            logDebug('Device woken up');
+        }
+        
+        function clearScreen() {
+            document.getElementById('content').textContent = '';
+            updateStatus('Screen cleared');
+            logDebug('Screen cleared');
+        }
+        
+        function testWatchFace(text) {
+            if (isSleeping) {
+                updateStatus('Cannot test: device sleeping');
+                return;
+            }
+            updateDisplay(text);
+        }
+        
+        function updateStatus(message) {
+            const uptime = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('status').textContent = 
+                `Status: ${message} | Battery: ${batteryLevel}% | Uptime: ${uptime}s`;
+        }
+        
+        function logDebug(message) {
+            const debugInfo = document.getElementById('debugInfo');
+            const timestamp = new Date().toLocaleTimeString();
+            debugInfo.innerHTML += `<br>[${timestamp}] ${message}`;
+            
+            // Garder seulement les 10 dernières lignes
+            const lines = debugInfo.innerHTML.split('<br>');
+            if (lines.length > 15) {
+                debugInfo.innerHTML = lines.slice(-10).join('<br>');
+            }
+        }
+        
+        // Mise à jour de l'uptime et de la batterie
+        setInterval(() => {
+            if (!isSleeping) {
+                const uptime = Math.floor((Date.now() - startTime) / 1000);
+                // Simulation de la décharge de batterie
+                if (uptime % 60 === 0 && batteryLevel > 0) {
+                    batteryLevel--;
+                }
+                updateStatus('Active');
+            }
+        }, 1000);
+        
+        // Initialisation
+        logDebug('Watchy Simulator started');
+        logDebug('Screen resolution: 154x154 pixels');
+        logDebug('E-Paper: GxEPD2_154_D67');
+        logDebug('GPIO pins configured');
+    </script>
+</body>
+</html> 
