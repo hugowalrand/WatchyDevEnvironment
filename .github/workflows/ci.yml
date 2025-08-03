@@ -1,0 +1,36 @@
+name: Watchy Vocab CI
+
+on: [push, pull_request]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pio_env: [watchy, native]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/cache@v3
+      with:
+        path: ~/.platformio/packages
+        key: ${{ runner.os }}-pio
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    - name: Install PlatformIO
+      run: pip install -U platformio
+    - name: Run PlatformIO
+      run: pio run -e ${{ matrix.pio_env }}
+    - name: Run Unit Tests (native only)
+      if: matrix.pio_env == 'native'
+      run: pio test -e native --verbose
+    - name: Check Firmware Size (watchy only)
+      if: matrix.pio_env == 'watchy'
+      run: |
+        FIRMWARE_PATH=$(find .pio/build/watchy -name "firmware.bin")
+        SIZE=$(stat -c%s "$FIRMWARE_PATH")
+        echo "Firmware size is $SIZE bytes."
+        if [ $SIZE -gt 800000 ]; then
+          echo "::error::Firmware size exceeds 800kB!"
+          exit 1
+        fi 
